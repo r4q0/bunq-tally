@@ -151,7 +151,18 @@ PROMPT;
     {
         $maxEdge = 7680;
         $bytes = (string) file_get_contents($file->getRealPath());
-        $image = @imagecreatefromstring($bytes);
+
+        if (! \extension_loaded('gd')) {
+            $path = $file->store('receipts', 'public');
+
+            return [
+                'path' => $path,
+                'media_type' => (string) $file->getMimeType(),
+                'base64' => base64_encode($bytes),
+            ];
+        }
+
+        $image = @\imagecreatefromstring($bytes);
 
         if ($image === false) {
             $path = $file->store('receipts', 'public');
@@ -163,11 +174,11 @@ PROMPT;
             ];
         }
 
-        $width = imagesx($image);
-        $height = imagesy($image);
+        $width = \imagesx($image);
+        $height = \imagesy($image);
 
         if ($width <= $maxEdge && $height <= $maxEdge) {
-            imagedestroy($image);
+            \imagedestroy($image);
             $path = $file->store('receipts', 'public');
 
             return [
@@ -181,8 +192,8 @@ PROMPT;
         $newWidth = (int) max(1, round($width * $scale));
         $newHeight = (int) max(1, round($height * $scale));
 
-        $scaled = imagescale($image, $newWidth, $newHeight);
-        imagedestroy($image);
+        $scaled = \imagescale($image, $newWidth, $newHeight);
+        \imagedestroy($image);
 
         if ($scaled === false) {
             $path = $file->store('receipts', 'public');
@@ -194,14 +205,14 @@ PROMPT;
             ];
         }
 
-        if (function_exists('imagepalettetotruecolor') && ! imageistruecolor($scaled)) {
-            imagepalettetotruecolor($scaled);
+        if (\function_exists('imagepalettetotruecolor') && ! \imageistruecolor($scaled)) {
+            \imagepalettetotruecolor($scaled);
         }
 
-        ob_start();
-        imagejpeg($scaled, null, 88);
-        $jpegBytes = (string) ob_get_clean();
-        imagedestroy($scaled);
+        \ob_start();
+        \imagejpeg($scaled, null, 88);
+        $jpegBytes = (string) \ob_get_clean();
+        \imagedestroy($scaled);
 
         $path = 'receipts/'.Str::uuid()->toString().'.jpg';
         Storage::disk('public')->put($path, $jpegBytes);
