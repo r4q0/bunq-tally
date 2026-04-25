@@ -11,12 +11,23 @@ export interface ApiContact {
     whatsapp_profile_pic: string | null;
 }
 
+export interface ApiAllocation {
+    contact_id: number;
+    weight: number;
+}
+
 export interface ApiReceiptItem {
     id: number;
     name: string;
     price: number;
     quantity: number;
     assigned_contact_ids: number[];
+    allocations?: ApiAllocation[];
+}
+
+export interface ApiSaveAllocationRow {
+    receipt_item_id: number;
+    allocations: ApiAllocation[];
 }
 
 export interface ApiSplit {
@@ -146,7 +157,7 @@ export const api = {
 
     listReceipts: () => request<{ data: ApiReceipt[] }>('/api/receipts'),
     getReceipt: (id: number) => request<{ data: ApiReceipt }>(`/api/receipts/${id}`),
-    saveAllocations: (id: number, allocations: { receipt_item_id: number; contact_ids: number[] }[]) =>
+    saveAllocations: (id: number, allocations: ApiSaveAllocationRow[]) =>
         request<{ data: ApiReceipt }>(`/api/receipts/${id}/allocations`, {
             method: 'POST',
             body: JSON.stringify({ allocations }),

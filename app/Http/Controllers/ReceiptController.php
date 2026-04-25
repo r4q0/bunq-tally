@@ -40,11 +40,16 @@ class ReceiptController extends Controller
      */
     public function saveAllocations(Request $request, Receipt $receipt): JsonResponse
     {
+        // Accept either the legacy { contact_ids: int[] } shape (equal-share toggles)
+        // or the new weighted shape { allocations: [{ contact_id, weight }] }.
         $data = $request->validate([
             'allocations' => 'required|array',
             'allocations.*.receipt_item_id' => 'required|integer',
             'allocations.*.contact_ids' => 'array',
             'allocations.*.contact_ids.*' => 'integer|exists:contacts,id',
+            'allocations.*.allocations' => 'array',
+            'allocations.*.allocations.*.contact_id' => 'required|integer|exists:contacts,id',
+            'allocations.*.allocations.*.weight' => 'required|integer|min:1',
         ]);
 
         $itemIds = $receipt->items()->pluck('id')->all();
@@ -62,21 +67,68 @@ class ReceiptController extends Controller
             ], 422);
         }
 
-        DB::transaction(function () use ($data, $itemIds) {
+        // Reject duplicate contacts within the same item's weighted allocations.
+        $duplicateItemIds = collect($data['allocations'])
+            ->filter(fn ($row) => isset($row['allocations']) && is_array($row['allocations']))
+            ->filter(function ($row) {
+                $ids = array_map(fn ($a) => (int) $a['contact_id'], $row['allocations']);
+                return count($ids) !== count(array_unique($ids));
+            })
+            ->pluck('receipt_item_id')
+            ->values()
+            ->all();
+
+        if (! empty($duplicateItemIds)) {
+            return response()->json([
+                'message' => 'Each contact can appear at most once per item.',
+                'invalid_receipt_item_ids' => $duplicateItemIds,
+            ], 422);
+        }
+
+        DB::transaction(function () use ($data) {
             foreach ($data['allocations'] as $row) {
                 ReceiptItemAllocation::where('receipt_item_id', $row['receipt_item_id'])->delete();
 
-                foreach (array_unique($row['contact_ids'] ?? []) as $contactId) {
+                $weighted = $this->normalizeAllocationRow($row);
+                foreach ($weighted as $contactId => $weight) {
                     ReceiptItemAllocation::create([
                         'receipt_item_id' => $row['receipt_item_id'],
                         'contact_id' => $contactId,
-                        'weight' => 1,
+                        'weight' => max(1, (int) $weight),
                     ]);
                 }
             }
         });
 
         return $this->show($receipt->fresh());
+    }
+
+    /**
+     * Returns [contact_id => weight] for one allocations row, supporting both
+     * the legacy contact_ids array and the new weighted allocations array.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<int, int>
+     */
+    private function normalizeAllocationRow(array $row): array
+    {
+        if (isset($row['allocations']) && is_array($row['allocations']) && ! empty($row['allocations'])) {
+            $out = [];
+            foreach ($row['allocations'] as $alloc) {
+                $cid = (int) ($alloc['contact_id'] ?? 0);
+                if ($cid <= 0) {
+                    continue;
+                }
+                $out[$cid] = max(1, (int) ($alloc['weight'] ?? 1));
+            }
+            return $out;
+        }
+
+        $out = [];
+        foreach (array_unique($row['contact_ids'] ?? []) as $cid) {
+            $out[(int) $cid] = 1;
+        }
+        return $out;
     }
 
     /**
@@ -252,12 +304,18 @@ class ReceiptController extends Controller
     private function transform(Receipt $r, bool $includeSplits = false): array
     {
         $items = $r->items->map(function ($item) {
+            $allocs = $item->allocations->map(fn ($a) => [
+                'contact_id' => (int) $a->contact_id,
+                'weight' => max(1, (int) $a->weight),
+            ])->values()->all();
+
             return [
                 'id' => $item->id,
                 'name' => $item->item_name,
                 'price' => (float) $item->price,
                 'quantity' => (int) $item->quantity,
                 'assigned_contact_ids' => $item->allocations->pluck('contact_id')->all(),
+                'allocations' => $allocs,
             ];
         });
 
