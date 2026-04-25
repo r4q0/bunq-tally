@@ -192,7 +192,3 @@ This is also wired into `composer.json`'s `post-autoload-dump` hook so it re-app
 ## Credits
 
 Built with love by [Bilal Noah Kerkeni](https://www.linkedin.com/in/kerkeni/) (project lead), [Charalampos Efthymiadis](https://www.linkedin.com/in/charalampos-efthymiadis-181831251/), [Eesti Raud](https://www.linkedin.com/in/eesti-raud-8b5b45389/) and [Josef Pulkrábek](https://www.linkedin.com/in/josef-pulkr%C3%A1bek-638a433a3/).
-
-## License
-
-MIT
