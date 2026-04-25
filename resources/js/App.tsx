@@ -2,7 +2,7 @@ import { useState, createContext, useContext, useEffect, useRef, useCallback } f
 import {
   Camera, Clock, Check, ChevronRight, Users,
   ReceiptText, Info, X, Sun, Moon, Loader2,
-  Plus, Pencil, Trash2,
+  Plus, Minus, Pencil, Trash2,
   BarChart3, TrendingUp, TrendingDown, Target, AlertTriangle, Sparkles,
 } from "lucide-react";
 import {
@@ -283,6 +283,17 @@ function toggleAssign(alloc: Allocations, item: ReceiptItem, friendId: number): 
   return { ...alloc, [item.id]: current };
 }
 
+function bumpAssign(alloc: Allocations, item: ReceiptItem, friendId: number, delta: number): Allocations {
+  const current = { ...(alloc[item.id] ?? {}) };
+  const next = (current[friendId] ?? 0) + delta;
+  if (next <= 0) {
+    delete current[friendId];
+  } else {
+    current[friendId] = next;
+  }
+  return { ...alloc, [item.id]: current };
+}
+
 // ── bunq rainbow wordmark ─────────────────────────────────────────────────────
 
 function BunqMark({ size = 24 }: { size?: number }) {
@@ -551,6 +562,116 @@ function FriendSelector({ allocation, onAssign, onManage }: FriendSelectorProps)
             Manage
           </span>
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Per-friend weight stepper (partial quantity) ─────────────────────────────
+
+interface WeightSteppersProps {
+  item: ReceiptItem;
+  allocation: Record<number, number>;
+  onBump: (friendId: number, delta: number) => void;
+}
+
+function WeightSteppers({ item, allocation, onBump }: WeightSteppersProps) {
+  const theme = useTheme();
+  const { friends } = useFriends();
+
+  const weightSum = Object.values(allocation).reduce((s, n) => s + (n || 0), 0);
+  const lineTotal = item.price * item.quantity;
+  const perUnit = weightSum > 0 ? lineTotal / weightSum : 0;
+  const hasQuantity = item.quantity > 1;
+
+  const entries = Object.entries(allocation)
+    .filter(([, w]) => Number(w) > 0)
+    .map(([fid, w]) => ({ friendId: Number(fid), weight: Number(w) }));
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-2 px-1">
+        <p
+          className="text-[10px] font-bold uppercase"
+          style={{ color: theme.dim, letterSpacing: "0.18em" }}
+        >
+          Units per friend
+        </p>
+        {hasQuantity && (
+          <span className="text-[10px] font-semibold" style={{ color: theme.dim }}>
+            {weightSum} of ×{item.quantity}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {entries.map(({ friendId, weight }) => {
+          const f = friends.find(x => x.id === friendId);
+          if (!f) return null;
+          const share = perUnit * weight;
+          return (
+            <div
+              key={friendId}
+              className="flex items-center gap-3 rounded-2xl px-3 py-2"
+              style={{ background: theme.card, border: `1px solid ${theme.border}` }}
+            >
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white overflow-hidden flex-shrink-0"
+                style={{ background: f.color, fontSize: 11, fontWeight: 800 }}
+              >
+                {f.profilePic
+                  ? <img src={f.profilePic} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : f.initials}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: theme.text }}>
+                  {f.name}
+                </p>
+                <p
+                  className="text-[11px] font-semibold"
+                  style={{ color: theme.dim, fontFeatureSettings: "'tnum'", fontFamily: FONT_MONO }}
+                >
+                  €{share.toFixed(2)}
+                  {hasQuantity ? ` · ${weight} unit${weight === 1 ? '' : 's'}` : ''}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onBump(friendId, -1)}
+                  aria-label={`Decrease ${f.name} weight`}
+                  className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                  style={{
+                    background: "transparent",
+                    border: `1.5px solid ${theme.border}`,
+                    color: theme.text,
+                  }}
+                >
+                  <Minus size={14} strokeWidth={2.5} />
+                </button>
+                <span
+                  className="text-sm font-bold w-5 text-center"
+                  style={{ color: theme.text, fontFamily: FONT_MONO, fontFeatureSettings: "'tnum'" }}
+                >
+                  {weight}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onBump(friendId, 1)}
+                  aria-label={`Increase ${f.name} weight`}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"
+                  style={{ background: f.color }}
+                >
+                  <Plus size={14} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -911,6 +1032,13 @@ function TallyScreen({ onReceiptOpenChange }: TallyScreenProps) {
     setAllocations(prev => toggleAssign(prev, item, friendId));
   };
 
+  const handleBump = (friendId: number, delta: number) => {
+    if (selected === null) return;
+    const item = currentItems.find(i => i.id === selected);
+    if (!item) return;
+    setAllocations(prev => bumpAssign(prev, item, friendId, delta));
+  };
+
   const startScan = () => {
     setErrorMessage(null);
     fileInputRef.current?.click();
@@ -988,7 +1116,12 @@ function TallyScreen({ onReceiptOpenChange }: TallyScreenProps) {
       .filter(item => totalAssigned(allocations[item.id] ?? {}) > 0)
       .map(item => ({
         receipt_item_id: item.id,
-        contact_ids: Object.keys(allocations[item.id] ?? {}).map(Number),
+        allocations: Object.entries(allocations[item.id] ?? {})
+          .filter(([, w]) => Number(w) > 0)
+          .map(([contactId, weight]) => ({
+            contact_id: Number(contactId),
+            weight: Math.max(1, Number(weight) | 0),
+          })),
       }));
 
   const handleConfirm = async () => {
@@ -1487,12 +1620,22 @@ function TallyScreen({ onReceiptOpenChange }: TallyScreenProps) {
                             );
                           })}
                         </div>
-                        <span
-                          className="text-[11px] font-semibold ml-2"
-                          style={{ color: theme.dim, fontFeatureSettings: "'tnum'", fontFamily: FONT_MONO }}
-                        >
-                          €{(lineTotal / assignedN).toFixed(2)} each
-                        </span>
+                        {(() => {
+                          const weights = Object.values(alloc);
+                          const allEqual = weights.every(w => w === weights[0]);
+                          const perUnit = lineTotal / assignedN;
+                          const label = allEqual
+                            ? `€${perUnit.toFixed(2)} each`
+                            : `€${perUnit.toFixed(2)} per unit`;
+                          return (
+                            <span
+                              className="text-[11px] font-semibold ml-2"
+                              style={{ color: theme.dim, fontFeatureSettings: "'tnum'", fontFamily: FONT_MONO }}
+                            >
+                              {label}
+                            </span>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -1522,6 +1665,13 @@ function TallyScreen({ onReceiptOpenChange }: TallyScreenProps) {
                       onAssign={handleAssign}
                       onManage={openManager}
                     />
+                    {assignedN > 0 && (
+                      <WeightSteppers
+                        item={item}
+                        allocation={alloc}
+                        onBump={handleBump}
+                      />
+                    )}
                   </div>
                 )}
               </div>
