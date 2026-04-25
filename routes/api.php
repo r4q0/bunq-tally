@@ -3,6 +3,8 @@
 use App\Http\Controllers\BunqController;
 use Illuminate\Support\Facades\Route;
 
+Route::apiResource('contacts', ContactController::class)->except(['show']);
+
 Route::post('/payment-requests', [BunqController::class, 'createPaymentRequest']);
 Route::post('/payment-requests/{paymentRequest}/sync', [BunqController::class, 'syncPaymentStatus']);
 
