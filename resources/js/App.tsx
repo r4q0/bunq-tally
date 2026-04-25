@@ -283,11 +283,14 @@ function BunqMark({ size = 24 }: { size?: number }) {
     <span
       className="flex"
       style={{
-        fontFamily: `"Blanquotey", ${FONT_ALT}`,
-        fontWeight: 900,
+        fontFamily: FONT_HEAD,
+        fontWeight: 600,
         fontSize: size,
         lineHeight: 1,
-        letterSpacing: "-0.04em",
+        letterSpacing: "-0.028em",
+        fontStyle: "normal",
+        textDecoration: "none",
+        textTransform: "none",
       }}
     >
       {letters.map((l, i) => (
@@ -1607,7 +1610,12 @@ function ReceiptsScreen() {
 function CreditsModal({ onClose }: { onClose: () => void }) {
   const theme = useTheme();
   const { friends } = useFriends();
-  const creators = ["Eesti", "Noah ", "Cha", "Josef"];
+  const creators = [
+    { name: "Bilal Noah Kerkeni",       linkedin: "https://www.linkedin.com/in/kerkeni/",                              avatar: "/avatars/bilal.jpg" },
+    { name: "Charalampos Efthymiadis",  linkedin: "https://www.linkedin.com/in/charalampos-efthymiadis-181831251/",    avatar: "/avatars/charalampos.jpg" },
+    { name: "Eesti Raud",               linkedin: "https://www.linkedin.com/in/eesti-raud-8b5b45389/",                 avatar: "/avatars/eesti.jpg" },
+    { name: "Josef Pulkrábek",          linkedin: "https://www.linkedin.com/in/josef-pulkr%C3%A1bek-638a433a3/",      avatar: "/avatars/josef.jpg" },
+  ];
   return (
     <div
       className="fixed inset-0 z-50 backdrop-blur-sm flex items-end justify-center"
@@ -1627,25 +1635,22 @@ function CreditsModal({ onClose }: { onClose: () => void }) {
           <div>
             <span
               className="inline-flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full"
-              style={{ background: theme.brand, color: "#000" }}
+              style={{ background: "#FFFFFF" }}
             >
               <BunqMark size={11} />
-              <span>hackathon</span>
+              <span>Tally</span>
             </span>
-            <h3 className="text-2xl font-black mt-3 tracking-tight" style={{ color: theme.text }}>
-              Tally
-            </h3>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center mt-1"
+            className="w-8 h-8 rounded-full flex items-center justify-center"
             style={{ background: theme.cardHi }}
           >
             <X size={14} style={{ color: theme.dim }} />
           </button>
         </div>
         <p className="text-sm leading-relaxed mb-5" style={{ color: theme.dim }}>
-          Smart bill splitting, built for the real world.
+          AI-powered smart bill splitting. Scan receipts, assign items, and send splits via WhatsApp instantly.
         </p>
         <p
           className="text-xs font-black uppercase tracking-widest mb-3"
@@ -1654,27 +1659,26 @@ function CreditsModal({ onClose }: { onClose: () => void }) {
           Made with ♥ by
         </p>
         <div className="flex flex-col gap-2.5">
-          {creators.map((name, i) => {
-            const friend = friends[i % Math.max(1, friends.length)];
-            const color = friend?.color ?? BRAND.green;
+          {creators.map(({ name, linkedin, avatar }) => {
             return (
-              <div key={name} className="flex items-center gap-3">
+              <a key={name} href={linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-3 hover:opacity-75 transition-opacity">
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black"
-                  style={{ background: color }}
+                  className="w-9 h-9 rounded-full shrink-0 overflow-hidden relative"
+                  style={{ background: "#000" }}
                 >
-                  {name[0]}
+                  <img
+                    src={avatar}
+                    alt={name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
                 </div>
                 <p className="text-sm font-semibold" style={{ color: theme.text }}>{name}</p>
-              </div>
+              </a>
             );
           })}
         </div>
-        <div className="mt-6 pt-4" style={{ borderTop: `1px solid ${theme.border}` }}>
-          <p className="text-xs text-center font-medium" style={{ color: theme.dimmer }}>
-            v1.0.0 · bunq hackathon 2025
-          </p>
-        </div>
+      
       </div>
     </div>
   );
@@ -1813,7 +1817,7 @@ export default function App() {
                     className="text-2xl font-black tracking-tight"
                     style={{ color: theme.text, fontFamily: FONT_HEAD }}
                   >
-                    {tab === "tally" ? "Tally" : "Receipts"}
+                    {tab === "tally" ? "Tally" : "Tally"}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
