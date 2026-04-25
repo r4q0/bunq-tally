@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'openwa' => [
+        'url' => env('OPENWA_URL', 'http://127.0.0.1:2785'),
+        'api_key' => env('OPENWA_API_KEY'),
+        'session_id' => env('OPENWA_SESSION_ID'),
+    ],
+
 ];
