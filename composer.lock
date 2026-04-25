@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53b5d56b3b7e3cbac1713e68c8850f6c",
+    "content-hash": "4e6e544bdcf98cc31537fcc798bd59aa",
     "packages": [
         {
             "name": "brick/math",
@@ -65,6 +65,73 @@
                 }
             ],
             "time": "2026-02-10T14:33:43+00:00"
+        },
+        {
+            "name": "bunq/sdk_php",
+            "version": "1.28.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bunq/sdk_php.git",
+                "reference": "c0a1697f2d50e5028b75a484c97c6663593098cc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bunq/sdk_php/zipball/c0a1697f2d50e5028b75a484c97c6663593098cc",
+                "reference": "c0a1697f2d50e5028b75a484c97c6663593098cc",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "~1.0 || ~2.0",
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "guzzlehttp/guzzle": "^7.4",
+                "php": "^7.3 || ^8.0"
+            },
+            "require-dev": {
+                "composer/composer": "^1.10.11 || ^2.0.1",
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "php-parallel-lint/php-parallel-lint": "^1.2",
+                "phpro/grumphp": "^1.9",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9.5"
+            },
+            "bin": [
+                "bin/bunq-install"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "bunq\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "bunq",
+                    "email": "sdk@bunq.com",
+                    "homepage": "https://www.bunq.com",
+                    "role": "Owner"
+                }
+            ],
+            "description": "bunq PHP SDK",
+            "homepage": "https://bunq.com/",
+            "keywords": [
+                "api",
+                "bunq",
+                "finance",
+                "open-banking",
+                "payment",
+                "sepa"
+            ],
+            "support": {
+                "issues": "https://github.com/bunq/sdk_php/issues",
+                "source": "https://github.com/bunq/sdk_php/tree/1.28.0"
+            },
+            "time": "2025-04-29T15:46:16+00:00"
         },
         {
             "name": "carbonphp/carbon-doctrine-types",

@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    'openwa' => [
+        'url' => env('OPENWA_URL', 'http://127.0.0.1:2785'),
+        'api_key' => env('OPENWA_API_KEY'),
+        'session_id' => env('OPENWA_SESSION_ID'),
+    ],
+
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-opus-4-5'),
+        'version' => env('ANTHROPIC_VERSION', '2023-06-01'),
+        'url' => env('ANTHROPIC_URL', 'https://api.anthropic.com/v1/messages'),
+    ],
+
 ];
