@@ -10,11 +10,9 @@ Route::get('/', function () {
 
 
 Route::get('/bunq', function () {
-    $bunq = new BunqController(new App\Services\BunqService());
+    $bunq = app(BunqController::class);
     return $bunq->createPaymentRequest(new Illuminate\Http\Request([
         'amount' => 10.00,
         'description' => 'Test payment',
     ]));
-
-
 });

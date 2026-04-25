@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('payment_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('contact_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('contact_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('amount', 10, 2);
             $table->boolean('paid')->default(false);
             $table->timestamp('paid_at')->nullable();

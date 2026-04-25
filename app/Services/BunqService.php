@@ -4,10 +4,10 @@ namespace App\Services;
 
 use bunq\Context\ApiContext;
 use bunq\Context\BunqContext;
+use bunq\Model\Generated\Endpoint\BunqMeTabApiObject;
+use bunq\Model\Generated\Endpoint\BunqMeTabEntryApiObject;
+use bunq\Model\Generated\Object\AmountObject;
 use bunq\Util\BunqEnumApiEnvironmentType;
-use bunq\Model\Generated\Endpoint\BunqMeTab;
-use bunq\Model\Generated\Object\Amount;
-use bunq\Model\Generated\Object\BunqMeTabEntry;
 
 class BunqService
 {
@@ -22,14 +22,9 @@ class BunqService
     private function boot(): void
     {
         if (!file_exists($this->contextPath)) {
-            $context = ApiContext::create(
-                config('bunq.env') === 'production'
-                    ? BunqEnumApiEnvironmentType::PRODUCTION()
-                    : BunqEnumApiEnvironmentType::SANDBOX(),
-                config('bunq.api_key'),
-                'bunq-tally'
+            throw new \RuntimeException(
+                'bunq context not initialised. Run: php artisan bunq:setup'
             );
-            $context->save($this->contextPath);
         }
 
         BunqContext::loadApiContext(ApiContext::restore($this->contextPath));
@@ -42,17 +37,17 @@ class BunqService
      */
     public function createPaymentLink(float $amount, string $description): array
     {
-        $accountId = (int) config('bunq.monetary_account_id');
+        $accountId = config('bunq.monetary_account_id') ? (int) config('bunq.monetary_account_id') : null;
 
-        $tabId = BunqMeTab::create(
-            new BunqMeTabEntry(
-                new Amount(number_format($amount, 2, '.', ''), 'EUR'),
+        $tabId = BunqMeTabApiObject::create(
+            new BunqMeTabEntryApiObject(
+                new AmountObject(number_format($amount, 2, '.', ''), 'EUR'),
                 $description
             ),
             $accountId
         )->getValue();
 
-        $tab = BunqMeTab::get($tabId, $accountId)->getValue();
+        $tab = BunqMeTabApiObject::get($tabId, $accountId)->getValue();
 
         return [
             'tab_id' => $tabId,
@@ -65,8 +60,8 @@ class BunqService
      */
     public function isTabPaid(int $tabId): bool
     {
-        $accountId = (int) config('bunq.monetary_account_id');
-        $tab = BunqMeTab::get($tabId, $accountId)->getValue();
+        $accountId = config('bunq.monetary_account_id') ? (int) config('bunq.monetary_account_id') : null;
+        $tab = BunqMeTabApiObject::get($tabId, $accountId)->getValue();
 
         $inquiries = $tab->getResultInquiries();
 
