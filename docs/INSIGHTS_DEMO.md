@@ -17,7 +17,7 @@ clean baseline.
 
 ## 90-second demo flow
 
-1. **0:00** Open `http://127.0.0.1:8000`. Tap the **Insights** tab.
+1. **0:00** Open `http://172.20.10.5:8000`. Tap the **Insights** tab.
 2. **0:05** "This month" card shows the running total + month-over-month delta.
 3. **0:15** "Spend by category" donut highlights Groceries / Alcohol / Coffee /
    Food out as the top categories (colors match the in-app palette).
