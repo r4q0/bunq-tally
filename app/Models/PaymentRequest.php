@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentRequest extends Model
 {
-    protected $fillable = ['contact_id', 'amount', 'paid', 'paid_at'];
+    protected $fillable = ['contact_id', 'amount', 'paid', 'paid_at', 'bunq_tab_id', 'payment_url'];
 
     protected $casts = [
         'paid' => 'boolean',
