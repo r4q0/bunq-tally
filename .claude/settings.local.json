@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer install *)",
+      "Bash(php -r \"echo PHP_VERSION . PHP_EOL; var_dump\\(extension_loaded\\('openssl'\\)\\); var_dump\\(openssl_pkey_new\\(\\)\\);\")",
+      "Bash(php -r \"echo php_ini_loaded_file\\(\\) . PHP_EOL;\")",
+      "Bash(where php *)"
+    ]
+  }
+}
